@@ -16,71 +16,81 @@ library(ANCOMBC)
 library(reshape2)
 `%notin%` <- function(x,y) !(x %in% y)
 
-#load data
-tax_table <- read.table('esvs_16s_171819.txt', header = TRUE)
-#set ESVID as rowname
-rownames(tax_table) <- tax_table$X.ESV_ID
-tax_table <- tax_table[,-1]
-#format taxonomy into multiple columns
-tax_table <-separate(tax_table,taxonomy,c("Kingdom","Phylum","Class","Order","Family","Genus",NA),sep = ";")
-tax_table <- tax_table %>% filter(Kingdom!="Eukaryota") %>% filter(Order!="Chloroplast") %>% filter(Family!="Mitochondria")
+# #load data
+# tax_table <- read.table('esvs_16s_171819.txt', header = TRUE)
+# #set ESVID as rowname
+# rownames(tax_table) <- tax_table$X.ESV_ID
+# tax_table <- tax_table[,-1]
+# #format taxonomy into multiple columns
+# tax_table <-separate(tax_table,taxonomy,c("Kingdom","Phylum","Class","Order","Family","Genus",NA),sep = ";")
+# tax_table <- tax_table %>% filter(Kingdom!="Eukaryota") %>% filter(Order!="Chloroplast") %>% filter(Family!="Mitochondria")
+# 
+# # And also remove contaminants. These were chosen by scrutinizing ESVtable.txt as a spreadsheet. Gotta re-do for fully combined.
+# contaminants16s <- read.table("esvs_16s_171819_contaminants.txt")
+# contaminants16s$V1 <- as.character(contaminants16s$V1)
+# taxa_input_bac_nocontam <- tax_table[rownames(tax_table) %notin% contaminants16s$V1,]
+# 
+# pfx.map <- read.csv("PFX_metadata_withnats.csv")
+# # subset only samples and ESVs of interest for this analysis
+# colnames(taxa_input_bac_nocontam)[633:687] <- gsub("B","P",colnames(taxa_input_bac_nocontam)[633:687])
+# pfx.bac.tax1 <- taxa_input_bac_nocontam[,832:837]
+# pfx.bac <- taxa_input_bac_nocontam[,colnames(taxa_input_bac_nocontam) %in% pfx.map$SampleID]
+# pfx.bac <- pfx.bac[rowSums(pfx.bac)>0,]
+# pfx.bac.tax <- pfx.bac.tax1[rownames(pfx.bac.tax1) %in% rownames(pfx.bac),]
+# pfx.bac.wt <- cbind(pfx.bac,pfx.bac.tax)
+# 
+# pfx.map <- pfx.map[order(pfx.map$SampleID),]
+# 
+# # First subset groups for only field experiment
+# fieldonly <- subset(pfx.map,Field_or_lab=="Field")
+# fieldonly <- fieldonly[fieldonly$SampleID != "P115",]
+# natsonly <- subset(pfx.map,Field_or_lab=="Natural")
+# # Add in previously sequenced mats
+# lab <- subset(pfx.map,Field_or_lab=="Lab")
+# lab0 <- subset(lab,Block==0)
+# field <- rbind(fieldonly,natsonly,lab0)
+# field$Order <- factor(field$Order, levels = c("BB","BO","AL","OB","OO","NO","Natural"))
+# field$Timing <- factor(field$Timing, levels = c("0","1","2","Natural"))
+# field <- field[order(field$SampleID),]
+# 
+# field.bacs <- pfx.bac[,colnames(pfx.bac) %in% field$SampleID]
+# field.bacs <- field.bacs[,order(colnames(field.bacs))]
+# field.bacs <- field.bacs[rowSums(field.bacs)>0,]
+# 
+# field.bacs.tax <- pfx.bac.tax[rownames(pfx.bac.tax) %in% rownames(field.bacs),]
+# field.bacs.tax <- field.bacs.tax[order(rownames(field.bacs.tax)),]
+# field.bacs <- field.bacs[order(rownames(field.bacs)),]
+# field.bacs.wt <- cbind(field.bacs,field.bacs.tax)
+# 
+# for (i in 1:6){ field.bacs.tax[,i] <- gsub("NA","",field.bacs.tax[,i])}
+# for (i in 1:nrow(field.bacs.tax)){
+#   if (field.bacs.tax[i,2] == ""){
+#     kingdom <- paste("Kingdom ", field.bacs.tax[i,1], sep = "")
+#     field.bacs.tax[i, 2:6] <- kingdom
+#   } else if (field.bacs.tax[i,3] == ""){
+#     phylum <- paste("Phylum ", field.bacs.tax[i,2], sep = "")
+#     field.bacs.tax[i, 3:6] <- phylum
+#   } else if (field.bacs.tax[i,4] == ""){
+#     class <- paste("Class ", field.bacs.tax[i,3], sep = "")
+#     field.bacs.tax[i, 4:6] <- class
+#   } else if (field.bacs.tax[i,5] == ""){
+#     order <- paste("Order ", field.bacs.tax[i,4], sep = "")
+#     field.bacs.tax[i, 5:6] <- order
+#   } else if (field.bacs.tax[i,6] == ""){
+#     family <- paste("Family ", field.bacs.tax[i,5], sep = "")
+#     field.bacs.tax[i, 6] <- family
+#   }
+# }
 
-# And also remove contaminants. These were chosen by scrutinizing ESVtable.txt as a spreadsheet. Gotta re-do for fully combined.
-contaminants16s <- read.table("esvs_16s_171819_contaminants.txt")
-contaminants16s$V1 <- as.character(contaminants16s$V1)
-taxa_input_bac_nocontam <- tax_table[rownames(tax_table) %notin% contaminants16s$V1,]
+# # Export CSVs of the ESV table and mapping file used for figures and analyses in this paper
+# write.csv(field.bacs,"ESV_table_PFX_Science_2023.csv")
+# write.csv(field.bacs.tax,"ESV_taxonomy_PFX_Science_2023.csv")
+# write.csv(field,"Metadata_mapping_table_PFX_Science_2023.csv")
 
-pfx.map <- read.csv("PFX_metadata_withnats.csv")
-# subset only samples and ESVs of interest for this analysis
-colnames(taxa_input_bac_nocontam)[633:687] <- gsub("B","P",colnames(taxa_input_bac_nocontam)[633:687])
-pfx.bac.tax1 <- taxa_input_bac_nocontam[,832:837]
-pfx.bac <- taxa_input_bac_nocontam[,colnames(taxa_input_bac_nocontam) %in% pfx.map$SampleID]
-pfx.bac <- pfx.bac[rowSums(pfx.bac)>0,]
-pfx.bac.tax <- pfx.bac.tax1[rownames(pfx.bac.tax1) %in% rownames(pfx.bac),]
-pfx.bac.wt <- cbind(pfx.bac,pfx.bac.tax)
+field.bacs <- read_csv("ESV_table_PFX_Science_2023.csv",header = TRUE)
+field.bacs.tax <- read_csv("ESV_taxonomy_PFX_Science_2023.csv",header = TRUE)
+field <- read_csv("Metadata_mapping_table_PFX_Science_2023.csv",header = TRUE)
 
-pfx.map <- pfx.map[order(pfx.map$SampleID),]
-
-# First subset groups for only field experiment
-fieldonly <- subset(pfx.map,Field_or_lab=="Field")
-fieldonly <- fieldonly[fieldonly$SampleID != "P115",]
-natsonly <- subset(pfx.map,Field_or_lab=="Natural")
-# Add in previously sequenced mats
-lab <- subset(pfx.map,Field_or_lab=="Lab")
-lab0 <- subset(lab,Block==0)
-field <- rbind(fieldonly,natsonly,lab0)
-field$Order <- factor(field$Order, levels = c("BB","BO","AL","OB","OO","NO","Natural"))
-field$Timing <- factor(field$Timing, levels = c("0","1","2","Natural"))
-field <- field[order(field$SampleID),]
-
-field.bacs <- pfx.bac[,colnames(pfx.bac) %in% field$SampleID]
-field.bacs <- field.bacs[,order(colnames(field.bacs))]
-field.bacs <- field.bacs[rowSums(field.bacs)>0,]
-
-field.bacs.tax <- pfx.bac.tax[rownames(pfx.bac.tax) %in% rownames(field.bacs),]
-field.bacs.tax <- field.bacs.tax[order(rownames(field.bacs.tax)),]
-field.bacs <- field.bacs[order(rownames(field.bacs)),]
-field.bacs.wt <- cbind(field.bacs,field.bacs.tax)
-
-for (i in 1:6){ field.bacs.tax[,i] <- gsub("NA","",field.bacs.tax[,i])}
-for (i in 1:nrow(field.bacs.tax)){
-  if (field.bacs.tax[i,2] == ""){
-    kingdom <- paste("Kingdom ", field.bacs.tax[i,1], sep = "")
-    field.bacs.tax[i, 2:6] <- kingdom
-  } else if (field.bacs.tax[i,3] == ""){
-    phylum <- paste("Phylum ", field.bacs.tax[i,2], sep = "")
-    field.bacs.tax[i, 3:6] <- phylum
-  } else if (field.bacs.tax[i,4] == ""){
-    class <- paste("Class ", field.bacs.tax[i,3], sep = "")
-    field.bacs.tax[i, 4:6] <- class
-  } else if (field.bacs.tax[i,5] == ""){
-    order <- paste("Order ", field.bacs.tax[i,4], sep = "")
-    field.bacs.tax[i, 5:6] <- order
-  } else if (field.bacs.tax[i,6] == ""){
-    family <- paste("Family ", field.bacs.tax[i,5], sep = "")
-    field.bacs.tax[i, 6] <- family
-  }
-}
 
 ### =====================================================================================
 ###  RANK ABUNDANCE PLOTS
