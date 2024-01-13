@@ -42,11 +42,6 @@ library(reshape2)
 # pfx.map <- pfx.map[order(pfx.map$SampleID),]
 # 
 # # First subset groups for only field experiment
-# fieldonly <- subset(pfx.map,Field_or_lab=="Field")
-# fieldonly <- fieldonly[fieldonly$SampleID != "P115",]
-# natsonly <- subset(pfx.map,Field_or_lab=="Natural")
-# # Add in previously sequenced mats
-# lab <- subset(pfx.map,Field_or_lab=="Lab")
 # lab0 <- subset(lab,Block==0)
 # field <- rbind(fieldonly,natsonly,lab0)
 # field$Order <- factor(field$Order, levels = c("BB","BO","AL","OB","OO","NO","Natural"))
